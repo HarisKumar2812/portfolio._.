@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haris Kumar's AI Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #12eb0a;
+            --secondary: #FFD700;
+            --dark: #0A0A0A;
+            --light: #FFFFFF;
+            --gray: #AAAAAA;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0A0A0A, #1a1a2e);
+            color: var(--light);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .chat-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .chat-header p {
+            color: rgba(0, 0, 0, 0.8);
+            font-size: 1rem;
+        }
+        
+        .chat-container {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            max-width: 85%;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bot-message {
+            background: rgba(18, 235, 10, 0.1);
+            border: 1px solid rgba(18, 235, 10, 0.3);
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .user-message {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message-content {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .message-time {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        
+        .quick-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+        }
+        
+        .quick-question {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.8rem 1.2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .quick-question:hover {
+            background: var(--primary);
+            color: var(--dark);
+            transform: translateY(-2px);
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            margin: 1rem 0;
+            padding: 0.5rem 1.5rem;
+            background: rgba(18, 235, 10, 0.1);
+            border-radius: 20px;
+            width: fit-content;
+        }
+        
+        .typing-indicator.active {
+            display: flex;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .chat-input-container {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            background: rgba(10, 10, 10, 0.8);
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        #chatInput {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(18, 235, 10, 0.3);
+            border-radius: 25px;
+            color: var(--light);
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        #chatInput:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(18, 235, 10, 0.3);
+        }
+        
+        #sendBtn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--dark);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #sendBtn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(18, 235, 10, 0.5);
+        }
+        
+        .initial-message {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(18, 235, 10, 0.05);
+            border-radius: 15px;
+            margin: 1rem 0;
+            border: 1px solid rgba(18, 235, 10, 0.2);
+        }
+        
+        .initial-message h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .initial-message p {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-header">
+        <h1><i class="fas fa-robot"></i> Haris's AI Assistant</h1>
+        <p>Ask me anything about Haris Kumar's experience, skills, and projects</p>
+    </div>
+    
+    <div class="chat-container" id="chatContainer">
+        <div class="initial-message">
+            <h3>👋 Hello! I'm Haris's AI Assistant</h3>
+            <p>I can help you learn about Haris Kumar's background, experience, skills, projects, and achievements.</p>
+            <p>Feel free to ask me anything!</p>
+        </div>
+        
+        <div class="quick-questions">
+            <div class="quick-question" onclick="askQuickQuestion('What is Haris Kumar\'s educational background?')">
+                📚 Education
+            </div>
+            <div class="quick-question" onclick="askQuickQuestion('What are Haris Kumar\'s technical skills?')">
+                💻 Technical Skills
+            </div>
+            <div class="quick-question" onclick="askQuickQuestion('Tell me about Haris Kumar\'s internship experience')">
+                🏢 Internships
+            </div>
+            <div class="quick-question" onclick="askQuickQuestion('What projects has Haris Kumar worked on?')">
+                🔧 Projects
+            </div>
+            <div class="quick-question" onclick="askQuickQuestion('What certifications does Haris Kumar have?')">
+                📜 Certifications
+            </div>
+            <div class="quick-question" onclick="askQuickQuestion('What are Haris Kumar\'s achievements?')">
+                🏆 Achievements
+            </div>
+            <div class="quick-question" onclick="askQuickQuestion('How can I contact Haris Kumar?')">
+                📞 Contact Info
+            </div>
+            <div class="quick-question" onclick="askQuickQuestion('What is Haris Kumar\'s current role?')">
+                💼 Current Role
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    </div>
+    
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+            <input type="text" id="chatInput" placeholder="Type your question here..." onkeypress="handleKeyPress(event)">
+            <button id="sendBtn" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Haris Kumar's data for the AI assistant
+        const harisData = {
+            personal: {
+                name: "Haris Kumar K",
+                title: "Aspiring AI, Data Science & Cloud Engineer",
+                phone: "+91 7904685948",
+                email: "2k22aids13@kiot.ac.in",
+                location: "24A, Pound street, Idappadi, 637101",
+                linkedin: "https://www.linkedin.com/in/haris-kumar-k-bba8b5260",
+                github: "https://github.com/HarisKumar2812/"
+            },
+            
+            education: [
+                {
+                    degree: "BTech in AI & Data Science",
+                    institution: "Knowledge Institute of Technology, Salem",
+                    period: "2022 - 2026",
+                    details: "CGPA: 8.11"
+                },
+                {
+                    degree: "Higher Secondary Education",
+                    institution: "Universal Matric HR Sec School",
+                    period: "2021 - 2022",
+                    details: "Percentage: 86%"
+                },
+                {
+                    degree: "Secondary Education",
+                    institution: "Universal Matric HR Sec School",
+                    period: "2019 - 2020",
+                    details: "Percentage: 96%"
+                }
+            ],
+            
+            experience: [
+                {
+                    role: "Radar Domain Intern",
+                    company: "Electronics & Radar Development Establishment (LRDE), DRDO, Bangalore",
+                    period: "Jul 2024 - Sep 2024",
+                    description: "Worked on 'Track Before Detection in Radar Systems' project. Created radar data cubes using Python and applied machine learning algorithms for improved radar signal processing and tracking."
+                },
+                {
+                    role: "Data Science Intern",
+                    company: "Unified Mentor Private Limited",
+                    period: "Feb 2024",
+                    description: "Data science internship focusing on machine learning and data analysis."
+                },
+                {
+                    role: "Data Science & AI Intern",
+                    company: "Codsoft",
+                    period: "Mar 2024 - Apr 2024",
+                    description: "Worked on AI and data science projects."
+                }
+            ],
+            
+            skills: {
+                programming: ["C", "Python (Pandas, Numpy, scikit-learn, Tensorflow)", "SQL", "Data Structures"],
+                tools: ["Git and GitHub", "Power BI", "MySQL", "HackerRank"],
+                technical: ["Deep Learning", "NLP", "Machine Learning", "Prompt Engineering", "Cloud Service Management"],
+                soft: ["Problem-solving", "Communication", "Teamwork"]
+            },
+            
+            projects: [
+                {
+                    name: "Track Before Detection in Radar Systems",
+                    description: "Developed machine learning algorithms for improved radar signal processing and tracking at DRDO.",
+                    tech: ["Python", "Machine Learning", "Radar"]
+                },
+                {
+                    name: "Eco-BIN - Efficient Waste Segregation System",
+                    description: "Patent approved automated waste segregation system using AI and sensors.",
+                    tech: ["AI", "IoT", "Sensors"]
+                },
+                {
+                    name: "Automated Ticket Collection System for Buses",
+                    description: "Patent approved system for automating ticket collection in public transport.",
+                    tech: ["IoT", "Automation"]
+                },
+                {
+                    name: "Voiceless Connections (using Alexa)",
+                    description: "Paper published on creating communication systems for speech-impaired using Alexa.",
+                    tech: ["NLP", "Alexa", "Accessibility"]
+                },
+                {
+                    name: "Number Plating System",
+                    description: "Computer vision system for automatic number plate recognition.",
+                    tech: ["Computer Vision", "OpenCV"]
+                },
+                {
+                    name: "AI-Driven Reminder & Assistant App",
+                    description: "Intelligent personal assistant application with reminder capabilities.",
+                    tech: ["AI", "Mobile App", "NLP"]
+                }
+            ],
+            
+            certifications: [
+                "NPTEL Elite Certification in Cloud Computing",
+                "Reinforcement Learning & Python for Data Science (NPTEL)",
+                "Machine Learning Specialization (Coursera)",
+                "Programming Fundamentals (Coursera - Duke University)",
+                "Oracle Cloud Infrastructure Foundations (Oracle)",
+                "Learnathon - ML, DL, Data Visualization (GUVI)"
+            ],
+            
+            achievements: [
+                "NMAUTNCPL-Naan Mudhalvan GUVI Hackathon Top 70 Finalist",
+                "Code O Clock-CIT Startup TN Hackathon Participant",
+                "istart Hackathon - 48hours Participant",
+                "MAWAZO 2025 - Kerala Startup Hackathon Finalist",
+                "GUVI Campus Ambassador",
+                "Kalam Scholarship with ₹10,500 cash reward",
+                "GeeksForGeeks 160-day coding challenge completion",
+                "Multiple college-level awards and recognitions"
+            ]
+        };
+        
+        const chatContainer = document.getElementById('chatContainer');
+        const chatInput = document.getElementById('chatInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        
+        // Format current time
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Add message to chat
+        function addMessage(content, isBot = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isBot ? 'bot-message' : 'user-message'}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">${content}</div>
+                <div class="message-time">${getCurrentTime()}</div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTyping() {
+            typingIndicator.classList.add('active');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Hide typing indicator
+        function hideTyping() {
+            typingIndicator.classList.remove('active');
+        }
+        
+        // AI response generation
+        function generateResponse(userQuestion) {
+            const question = userQuestion.toLowerCase();
+            
+            // Education related questions
+            if (question.includes('education') || question.includes('study') || question.includes('degree')) {
+                let response = "🎓 <strong>Haris Kumar's Education:</strong><br><br>";
+                harisData.education.forEach(edu => {
+                    response += `• <strong>${edu.degree}</strong><br>`;
+                    response += `  ${edu.institution}<br>`;
+                    response += `  ${edu.period} | ${edu.details}<br><br>`;
+                });
+                return response;
+            }
+            
+            // Skills related questions
+            else if (question.includes('skill') || question.includes('technology') || question.includes('programming')) {
+                return `💻 <strong>Haris Kumar's Skills:</strong><br><br>
+                <strong>Programming:</strong><br>${harisData.skills.programming.join(', ')}<br><br>
+                <strong>Tools & Platforms:</strong><br>${harisData.skills.tools.join(', ')}<br><br>
+                <strong>Technical Skills:</strong><br>${harisData.skills.technical.join(', ')}<br><br>
+                <strong>Soft Skills:</strong><br>${harisData.skills.soft.join(', ')}`;
+            }
+            
+            // Experience related questions
+            else if (question.includes('experience') || question.includes('internship') || question.includes('work')) {
+                let response = "🏢 <strong>Haris Kumar's Experience:</strong><br><br>";
+                harisData.experience.forEach(exp => {
+                    response += `• <strong>${exp.role}</strong><br>`;
+                    response += `  ${exp.company}<br>`;
+                    response += `  ${exp.period}<br>`;
+                    response += `  ${exp.description}<br><br>`;
+                });
+                return response;
+            }
+            
+            // Projects related questions
+            else if (question.includes('project')) {
+                let response = "🔧 <strong>Haris Kumar's Projects:</strong><br><br>";
+                harisData.projects.forEach((proj, index) => {
+                    response += `${index + 1}. <strong>${proj.name}</strong><br>`;
+                    response += `   ${proj.description}<br>`;
+                    response += `   <em>Technologies: ${proj.tech.join(', ')}</em><br><br>`;
+                });
+                return response;
+            }
+            
+            // Certifications related questions
+            else if (question.includes('certification') || question.includes('certificate')) {
+                return `📜 <strong>Haris Kumar's Certifications:</strong><br><br>${harisData.certifications.map(cert => `• ${cert}`).join('<br>')}`;
+            }
+            
+            // Achievements related questions
+            else if (question.includes('achievement') || question.includes('award') || question.includes('hackathon')) {
+                return `🏆 <strong>Haris Kumar's Achievements:</strong><br><br>${harisData.achievements.map(ach => `• ${ach}`).join('<br>')}`;
+            }
+            
+            // Contact related questions
+            else if (question.includes('contact') || question.includes('email') || question.includes('phone') || question.includes('linkedin') || question.includes('github')) {
+                return `📞 <strong>Contact Haris Kumar:</strong><br><br>
+                • <strong>Phone:</strong> ${harisData.personal.phone}<br>
+                • <strong>Email:</strong> ${harisData.personal.email}<br>
+                • <strong>Location:</strong> ${harisData.personal.location}<br>
+                • <strong>LinkedIn:</strong> <a href="${harisData.personal.linkedin}" target="_blank">${harisData.personal.linkedin}</a><br>
+                • <strong>GitHub:</strong> <a href="${harisData.personal.github}" target="_blank">${harisData.personal.github}</a>`;
+            }
+            
+            // General introduction
+            else if (question.includes('who') || question.includes('about') || question.includes('introduce') || question.includes('background')) {
+                return `👋 <strong>About Haris Kumar:</strong><br><br>
+                Haris Kumar K is an aspiring AI, Data Science, and Cloud Engineer with a passion for Computer Vision, Data Visualization, Machine Learning, and Cloud Computing.<br><br>
+                He is currently pursuing BTech in AI & Data Science at Knowledge Institute of Technology, Salem with a CGPA of 8.11.<br><br>
+                He has completed internships at DRDO, Unified Mentor, and Codsoft, and has worked on multiple projects including radar systems, waste segregation, and communication systems for the speech-impaired.`;
+            }
+            
+            // Current role
+            else if (question.includes('role') || question.includes('current') || question.includes('what do you do')) {
+                return `💼 <strong>Haris Kumar's Current Role:</strong><br><br>
+                Haris is currently a student pursuing BTech in AI & Data Science, actively engaged in internships, projects, and hackathons.<br><br>
+                He is actively seeking opportunities in AI, Data Science, and Cloud Engineering roles.`;
+            }
+            
+            // Default response
+            else {
+                return `🤖 I'm here to help you learn about Haris Kumar!<br><br>
+                You can ask me about:<br>
+                • His education background<br>
+                • Technical skills and experience<br>
+                • Projects he has worked on<br>
+                • Certifications and achievements<br>
+                • How to contact him<br><br>
+                Try asking something like "What are his technical skills?" or "Tell me about his education."`;
+            }
+        }
+        
+        // Handle quick question buttons
+        function askQuickQuestion(question) {
+            chatInput.value = question;
+            sendMessage();
+        }
+        
+        // Send message function
+        function sendMessage() {
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+            
+            // Add user message
+            addMessage(userMessage, false);
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Generate and show bot response after delay
+            setTimeout(() => {
+                hideTyping();
+                const botResponse = generateResponse(userMessage);
+                addMessage(botResponse, true);
+            }, 1500);
+        }
+        
+        // Handle Enter key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        // Initialize with welcome message
+        setTimeout(() => {
+            addMessage("Hello! I'm Haris's AI Assistant. How can I help you today?", true);
+        }, 1000);
+    </script>
+</body>
+</html>
